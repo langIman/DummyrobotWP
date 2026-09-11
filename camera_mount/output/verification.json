@@ -1,0 +1,124 @@
+{
+  "printable_meshes": [
+    {
+      "file": "dummy_j6_motor_clamp_bottom.stl",
+      "triangles": 1108,
+      "boundary_or_nonmanifold_edges": 0,
+      "size_mm": [
+        16.0,
+        45.0,
+        14.2
+      ]
+    },
+    {
+      "file": "dummy_j6_motor_clamp_top.stl",
+      "triangles": 2084,
+      "boundary_or_nonmanifold_edges": 0,
+      "size_mm": [
+        16.0,
+        58.6,
+        26.2
+      ]
+    },
+    {
+      "file": "decxin_camera_frame.stl",
+      "triangles": 4692,
+      "boundary_or_nonmanifold_edges": 0,
+      "size_mm": [
+        6.6,
+        50.0,
+        46.0
+      ]
+    }
+  ],
+  "pitch_clearance": {
+    "tested_range_deg": [
+      -45,
+      45
+    ],
+    "sample_step_deg": 5,
+    "clear_sample_range_deg": [
+      -45,
+      45
+    ],
+    "samples": [
+      {
+        "angle_deg": -45,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": -40,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": -35,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": -30,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": -25,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": -20,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": -15,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": -10,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": -5,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": 0,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": 5,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": 10,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": 15,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": 20,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": 25,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": 30,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": 35,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": 40,
+        "overlap_mm3": 0
+      },
+      {
+        "angle_deg": 45,
+        "overlap_mm3": 0
+      }
+    ]
+  },
+  "status": "passed"
+}

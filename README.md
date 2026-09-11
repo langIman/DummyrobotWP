@@ -11,6 +11,12 @@
 4.dummy_server：实现了通过python代码调用moveit2的行动规划相关功能的调用 <br>
 5.dummy_vision：dummy与d435的手眼标定过程，配置调试笔记见doc目录中《Dummy手眼标定笔记.pdf》 <br>
 
+# 本地辅助工具
+
+1.`windows_dummy_bridge`：Windows USB 到 HTTP/SSH 的机械臂通信桥接，供远程控制端调用。 <br>
+2.`tools/wrist_camera`：DECXIN 腕部 UVC 摄像头预览与分辨率、帧率检查工具，默认端口 8766。 <br>
+3.`camera_mount`：安装在第六轴 20 x 20 mm 电机上的可打印摄像头支架，包含 STL、STEP、参数化源码和装配说明。 <br>
+
 # moveit流式控制dummy
 
 ![Alt text](doc/moveit流式控制.jpg)
