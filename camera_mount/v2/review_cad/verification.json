@@ -1,0 +1,288 @@
+{
+  "cad_checks_passed": true,
+  "physical_fit_status": "UNCONFIRMED_REVIEW_DRAFT",
+  "checks": [
+    {
+      "check": "clamp halves separated",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "motor versus upper clamp",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "motor versus lower clamp",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "camera PCB versus carrier",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "lens envelope versus carrier",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "usb_plug_keepout_UNMEASURED versus carrier",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "usb_plug_keepout_UNMEASURED versus camera hardware",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "pin_left_keepout_UNMEASURED versus carrier",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "pin_left_keepout_UNMEASURED versus camera hardware",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "pin_right_keepout_UNMEASURED versus carrier",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "pin_right_keepout_UNMEASURED versus camera hardware",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "pivot nut wrench envelope -1 versus carrier",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "frame pivot hole -1 fully open",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "support pivot hole -1 fully open",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "upper clamp bolt hole -1 fully open",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "lower clamp bolt hole -1 fully open",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "clamp screw tool access -1",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "pivot nut wrench envelope 1 versus carrier",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "frame pivot hole 1 fully open",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "support pivot hole 1 fully open",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "upper clamp bolt hole 1 fully open",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "lower clamp bolt hole 1 fully open",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "clamp screw tool access 1",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "M2 carrier hole -17,43.0 fully open",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "M2 carrier hole -17,77.0 fully open",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "M2 carrier hole 17,43.0 fully open",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "M2 carrier hole 17,77.0 fully open",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "fixed hardware versus plastic",
+      "overlap_mm3": 0,
+      "passed": true
+    },
+    {
+      "check": "camera hardware versus plastic and PCB",
+      "overlap_mm3": 0,
+      "passed": true
+    }
+  ],
+  "split_gap_at_nominal_motor_mm": 2.0,
+  "nominal_thread_margins": {
+    "clamp_M3x25_thread_beyond_nut_mm": 0.8999999999999986,
+    "pivot_M3x16_thread_beyond_two_nuts_mm": 0.8000000000000007,
+    "camera_M2x10_thread_beyond_nut_mm": 0.8000000000000007
+  },
+  "pitch_samples": {
+    "range_deg": [
+      -30,
+      30
+    ],
+    "step_deg": 5,
+    "samples": [
+      {
+        "angle_deg": -30,
+        "overlap_mm3": 0,
+        "passed": true
+      },
+      {
+        "angle_deg": -25,
+        "overlap_mm3": 0,
+        "passed": true
+      },
+      {
+        "angle_deg": -20,
+        "overlap_mm3": 0,
+        "passed": true
+      },
+      {
+        "angle_deg": -15,
+        "overlap_mm3": 0,
+        "passed": true
+      },
+      {
+        "angle_deg": -10,
+        "overlap_mm3": 0,
+        "passed": true
+      },
+      {
+        "angle_deg": -5,
+        "overlap_mm3": 0,
+        "passed": true
+      },
+      {
+        "angle_deg": 0,
+        "overlap_mm3": 0,
+        "passed": true
+      },
+      {
+        "angle_deg": 5,
+        "overlap_mm3": 0,
+        "passed": true
+      },
+      {
+        "angle_deg": 10,
+        "overlap_mm3": 0,
+        "passed": true
+      },
+      {
+        "angle_deg": 15,
+        "overlap_mm3": 0,
+        "passed": true
+      },
+      {
+        "angle_deg": 20,
+        "overlap_mm3": 0,
+        "passed": true
+      },
+      {
+        "angle_deg": 25,
+        "overlap_mm3": 0,
+        "passed": true
+      },
+      {
+        "angle_deg": 30,
+        "overlap_mm3": 0,
+        "passed": true
+      }
+    ]
+  },
+  "stl_meshes": [
+    {
+      "file": "01_lower_clamp_DRAFT.stl",
+      "triangles": 1364,
+      "boundary_or_nonmanifold_edges": 0,
+      "size_mm": [
+        20.5,
+        59.0,
+        12.0
+      ]
+    },
+    {
+      "file": "02_upper_clamp_DRAFT.stl",
+      "triangles": 5756,
+      "boundary_or_nonmanifold_edges": 0,
+      "size_mm": [
+        66.0,
+        64.8,
+        24.0
+      ]
+    },
+    {
+      "file": "03_front_camera_carrier_DRAFT.stl",
+      "triangles": 7648,
+      "boundary_or_nonmanifold_edges": 0,
+      "size_mm": [
+        48.0,
+        56.0,
+        18.0
+      ]
+    }
+  ],
+  "step_roundtrip": [
+    {
+      "file": "01_lower_clamp_DRAFT.step",
+      "valid": true,
+      "solids": 1
+    },
+    {
+      "file": "02_upper_clamp_DRAFT.step",
+      "valid": true,
+      "solids": 1
+    },
+    {
+      "file": "03_front_camera_carrier_DRAFT.step",
+      "valid": true,
+      "solids": 1
+    }
+  ],
+  "limits": [
+    "No real gripper, wiring or adjacent-joint CAD has been supplied.",
+    "Connector volumes are proposed clearance envelopes, not measured geometry.",
+    "The rear lower M2 head is only 0.1 mm outside the proposed 3Pin corridor; measure actual plug clearance.",
+    "No strength, thermal-creep, cable-bend or printing-tolerance qualification.",
+    "Wrench envelope uses radius 4.5 mm; actual tool dimensions may differ.",
+    "Pitch scan samples every 5 degrees and does not prove continuous-motion clearance."
+  ]
+}

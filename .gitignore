@@ -3,3 +3,7 @@
 **/*.py[cod]
 **/runtime/
 **/*.log
+
+# Generated bundles / binary preview exports; keep source CAD and printable STL.
+camera_mount/v2/V2_trial_print_*.zip
+camera_mount/v2/review_cad/*.glb

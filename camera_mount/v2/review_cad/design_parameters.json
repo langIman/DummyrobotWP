@@ -1,0 +1,74 @@
+{
+  "status": "REVIEW_DRAFT_NOT_RELEASED_FOR_PRINT",
+  "parameters": {
+    "motor_size": 35.0,
+    "motor_length": 35.0,
+    "clamp_band": 12.0,
+    "cavity_width": 35.6,
+    "wall": 4.0,
+    "split_gap": 2.0,
+    "bolt_y": 25.5,
+    "bolt_diameter": 3.4,
+    "nut_af_clearance": 5.8,
+    "nut_pocket_depth": 2.8,
+    "flange_bottom": -7.0,
+    "clamp_head_seat_z": 17.5,
+    "pivot_x": 11.0,
+    "pivot_z": 60.0,
+    "pivot_radius": 7.0,
+    "frame_ear_inner": 22.0,
+    "frame_ear_outer": 28.0,
+    "hinge_gap": 0.4,
+    "fixed_ear_thickness": 4.0,
+    "frame_size": 48.0,
+    "frame_opening": 30.0,
+    "frame_rear_x": 3.0,
+    "frame_front_x": 6.0,
+    "pcb_size": 38.0,
+    "pcb_thickness": 1.6,
+    "pcb_pitch": 34.0,
+    "pcb_hole": 2.0,
+    "printed_m2_hole": 2.4,
+    "standoff_diameter": 5.5,
+    "lens_front_extent": 25.3,
+    "usb_keepout_width": 16.0,
+    "pin_keepout_width": 12.0,
+    "rear_keepout_depth": 40.0
+  },
+  "parts": [
+    {
+      "name": "01_lower_clamp_DRAFT",
+      "volume_mm3": 4564.347772612676,
+      "stl_size_mm": [
+        20.500336239390904,
+        59.000000200000024,
+        12.000000200000024
+      ]
+    },
+    {
+      "name": "02_upper_clamp_DRAFT",
+      "volume_mm3": 10903.72346522911,
+      "stl_size_mm": [
+        66.00068598260223,
+        64.80275807444231,
+        24.001276997875756
+      ]
+    },
+    {
+      "name": "03_front_camera_carrier_DRAFT",
+      "volume_mm3": 6072.873826832012,
+      "stl_size_mm": [
+        48.000000200000024,
+        56.0028043131179,
+        18.00057654217154
+      ]
+    }
+  ],
+  "unconfirmed": [
+    "12 mm unobstructed motor band and location",
+    "motor shell tolerance and clamping surfaces",
+    "connector/plug envelopes and cable bend space",
+    "front PCB component clearance at support pads",
+    "gripper, robot and full motion clearance"
+  ]
+}
