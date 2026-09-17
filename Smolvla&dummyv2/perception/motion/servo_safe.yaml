@@ -1,0 +1,44 @@
+###############################################
+# DummyV2 MoveIt Servo - guarded live control
+###############################################
+use_gazebo: false
+command_in_type: "speed_units"
+scale:
+  linear: 0.10
+  rotational: 0.24
+  joint: 0.25
+publish_period: 0.025
+max_expected_latency: 0.40
+low_latency_mode: true
+command_out_topic: /servo_node/joint_velocities
+command_out_type: std_msgs/Float64MultiArray
+# Kinematics and collision checks still use measured joint_states. The gateway
+# integrates the resulting velocities with a bounded lead over real feedback.
+publish_joint_positions: false
+publish_joint_velocities: true
+publish_joint_accelerations: false
+smoothing_filter_plugin_name: "online_signal_smoothing::ButterworthFilterPlugin"
+is_primary_planning_scene_monitor: true
+move_group_name: dummy_arm
+planning_frame: base_link
+ee_frame_name: link6_1_1
+robot_link_command_frame: base_link
+incoming_command_timeout: 0.10
+num_outgoing_halt_msgs_to_publish: 6
+# Disable condition-number slowdown/stop for every finite double value.
+# Keep lower < upper for Servo validation. Infinite/NaN condition numbers
+# still halt: disabling a posture threshold does not make invalid IK usable.
+lower_singularity_threshold: 1.7976931348623157e+308
+hard_stop_singularity_threshold: .inf
+joint_limit_margin: 0.15
+leaving_singularity_threshold_multiplier: 2.0
+cartesian_command_in_topic: ~/delta_twist_cmds
+joint_command_in_topic: ~/delta_joint_cmds
+joint_topic: /joint_states
+status_topic: ~/status
+check_collisions: true
+collision_check_rate: 20.0
+# The base/link2 model has a normal gap of 6.14+ mm in the audited grid.
+# A 10 mm exponential slowdown reduced normal poses to 7-35% speed.
+self_collision_proximity_threshold: 0.005
+scene_collision_proximity_threshold: 0.02

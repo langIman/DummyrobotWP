@@ -1,0 +1,40 @@
+{
+  "purpose": "measurement_only_not_runtime_configuration",
+  "date": "2026-09-15",
+  "timezone": "Asia/Shanghai",
+  "method": "user_positions_physical_endpoints_then_STLINK_SWD_HOTPLUG_read_only_RAM",
+  "flash_sha256": "F52D9209FE2EECA72B6EB0235E6C5446C2A326B2A0F1A6F4ECAF6C590076C5AF",
+  "closed": {"angle_deg": -17.10615348815918, "float32_hex": "C188D967", "matching_reads": 3, "local_time": "19:26"},
+  "open": {"angle_deg": -247.90342712402344, "float32_hex": "C377E747", "matching_reads": 3, "local_time": "19:27-19:28"},
+  "angle_span_deg": 230.79727363586426,
+  "opening_direction": "decreasing_angle",
+  "native_position_command": {
+    "format": "!HAND_POS N",
+    "accepted_integer_range": [0, 100],
+    "observed_base_angle_deg": -115.0,
+    "observed_stored_other_endpoint_deg": 115.0,
+    "degrees_per_unit_float32_hex": "40133333",
+    "degrees_per_unit_approx": 2.3,
+    "fixed_velocity_parameter": 65.0,
+    "covers_measured_travel": false
+  },
+  "physical_width_linearity_verified": false,
+  "position_following_tested": false,
+  "power_cycle_zero_retention_verified": false,
+  "absolute_endpoint_angles_valid_after_observed_power_cycle": false,
+  "power_cycle_observation": {
+    "user_confirmed_total_power_off_and_on": true,
+    "user_confirmed_gripper_remained_fully_open": true,
+    "local_read_time": "2026-09-15 19:32-19:33",
+    "open_before_deg": -247.90342712402344,
+    "open_after_deg": 22.099218368530273,
+    "after_float32_hex": "41B0CB33",
+    "difference_deg": 270.0026454925537,
+    "mainboard_reduction": 8,
+    "equivalent_motor_turns_approx": 6.000058788723416,
+    "multiturn_position_retained": false,
+    "firmware_open_close_current_after_a": 0.7,
+    "joint_readback_deg": [-1.37, -75.24, 180.66, 0.04, -0.27, 0.17]
+  },
+  "firmware_or_zero_modified": false
+}

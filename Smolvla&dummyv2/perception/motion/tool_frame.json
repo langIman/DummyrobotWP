@@ -1,0 +1,7 @@
+{
+  "tcp_offset_in_link6_m": [0.0, -0.105, 0.0],
+  "tcp_calibrated": false,
+  "measurement_from_mount_face_mm": 105.0,
+  "mount_face_reference": "assumed_at_link6_origin",
+  "note": "用户粗测安装面到指尖中点约 105 mm。实物转接件未进入模型，暂假定安装面与 link6 原点重合，横向偏移为零；此值是转向补偿初值，不是精确 TCP 标定。工具 +X 前方 = link6 -Y，+Y 左方 = link6 +X，+Z 上方 = link6 +Z。"
+}

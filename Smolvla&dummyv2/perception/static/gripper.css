@@ -1,0 +1,25 @@
+.gripper-status{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;margin-bottom:12px;color:var(--muted);font-size:12px}
+.joint-grid{grid-template-columns:repeat(7,minmax(0,1fr))}
+.joint{min-width:0;height:94px}
+.joint small{display:block;margin-top:6px;color:var(--muted);font-size:11px;white-space:nowrap}
+.joint.stale strong{color:var(--muted)}
+@media(max-width:720px){.joint-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.joint{height:90px;padding:9px 8px}.joint:last-child{grid-column:1/-1;border-top:1px solid var(--line)}.joint:nth-child(6){border-right:0}.joint small{font-size:10px}}
+.raw-controls{display:grid;grid-template-columns:minmax(0,1fr) 150px auto;align-items:end;gap:10px}
+.raw-controls input{width:100%;min-width:0;font-family:Consolas,monospace}
+.raw-band .section-heading{flex-wrap:wrap;gap:10px}
+#raw-mode{font-size:12px;color:var(--muted)}
+@media(max-width:720px){.raw-controls{grid-template-columns:minmax(0,1fr) auto}.raw-controls>.field:first-child{grid-column:1/-1}}
+.gripper-status strong{color:var(--ink);font-size:14px}
+.gripper-controls{display:flex;align-items:end;flex-wrap:wrap;gap:10px}
+.gripper-controls input{width:136px}
+.gripper-jog-controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.gripper-jog-controls .button{min-width:120px;touch-action:none;user-select:none}
+.gripper-jog-controls .jog-close{border-color:#a76533;color:#7b451f}
+.gripper-jog-controls .jog-open{border-color:#397a67;color:#245b4d}
+.gripper-jog-controls .button[data-holding="true"]{box-shadow:0 0 0 2px currentColor inset;background:#edf3f1}
+.gripper-note,.gripper-unavailable span{font-size:12px;color:var(--muted);line-height:1.7}
+.gripper-unavailable{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:12px 0}
+.gripper-replies{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.gripper-replies summary{font-size:12px;cursor:pointer;color:var(--muted)}
+.gripper-replies pre{font:12px/1.6 Consolas,"Microsoft YaHei",monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:190px;overflow:auto;background:#f4f6f6;padding:12px;margin-bottom:0}
+@media(max-width:720px){.gripper-band .section-heading{flex-wrap:wrap}.gripper-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.gripper-controls .field,.gripper-controls input{min-width:0;width:100%}.gripper-unavailable span{flex-basis:100%}.gripper-replies pre{max-height:220px}}

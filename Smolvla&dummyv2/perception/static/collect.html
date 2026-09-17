@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DummyV2 数据采集</title>
+  <link rel="stylesheet" href="/static/app.css?v=0.5.3">
+  <link rel="stylesheet" href="/static/collect.css?v=0.8.15">
+</head>
+<body class="collect-page">
+  <header class="app-header">
+    <div class="brand">
+      <a class="back-link" href="/" aria-label="返回感知控制台">←</a>
+      <div><strong>DummyV2</strong><span>数据采集模式</span></div>
+    </div>
+    <div class="header-actions">
+      <span class="service-state" id="collect-service"><i></i>连接中</span>
+      <button class="button danger emergency" id="collect-emergency">急停</button>
+    </div>
+  </header>
+
+  <main class="collect-main">
+    <section class="collect-heading">
+      <div><p class="section-kicker">DATA COLLECTION</p><h1>控制输入采集</h1></div>
+      <span id="collect-clock">--:--:--</span>
+    </section>
+
+    <section class="collect-record record-topbar" aria-label="片段录制">
+      <div class="collect-record-status"><span>录制状态</span><strong id="collect-record-state">查询中</strong><small id="collect-record-detail"></small></div>
+      <label class="field"><span>片段标签</span><input id="collect-label" maxlength="80" placeholder="例如：抓取演示 01"></label>
+      <div class="collect-record-actions"><button class="button primary" id="collect-record-start">开始录制</button><button class="button danger" id="collect-record-stop" disabled>停止录制</button></div>
+    </section>
+    <div class="collect-layout">
+      <section class="collect-views" aria-label="三路实时画面">
+        <figure class="camera-view" id="collect-view-wrist" data-state="connecting">
+          <figcaption><strong>腕部 RGB</strong><span id="collect-wrist-meta">等待图像</span></figcaption>
+          <div class="camera-screen"><img src="/api/streams/wrist.mjpeg" alt="腕部相机实时画面"></div>
+        </figure>
+        <figure class="camera-view" id="collect-view-oak-rgb" data-state="connecting">
+          <figcaption><strong>上方 RGB</strong><span id="collect-oak-rgb-meta">等待图像</span></figcaption>
+          <div class="camera-screen"><img src="/api/streams/oak-rgb.mjpeg" alt="OAK-D 上方彩色画面"></div>
+        </figure>
+        <figure class="camera-view" id="collect-view-oak-depth" data-state="connecting">
+          <figcaption><strong>上方深度</strong><span id="collect-oak-depth-meta">200–3000 mm</span></figcaption>
+          <div class="camera-screen"><img src="/api/streams/oak-depth.mjpeg" alt="OAK-D 深度伪彩画面"></div>
+        </figure>
+      </section>
+
+      <section class="collect-controls" aria-labelledby="control-heading">
+        <div class="section-heading compact">
+          <div><p class="section-kicker">INPUT SPACE</p><h2 id="control-heading">夹爪朝向与移动</h2></div>
+          <span id="collect-mode">记录模式</span>
+        </div>
+        <div class="collect-safety" id="collect-safety">实机控制未启用，不会发送六轴运动命令</div>
+        <div class="live-status" aria-label="实机控制状态">
+          <div><span>控制服务</span><strong id="moveit-state">检查中</strong></div>
+          <div><span>六轴</span><strong id="arm-state">状态未知</strong></div>
+          <div><span>夹爪</span><strong id="gripper-state">状态未知</strong></div>
+        </div>
+        <div class="live-actions">
+          <button class="button" id="collect-arm-enable">使能六轴+夹爪</button>
+          <button class="button hold-arm" id="collect-ready-hold" disabled><span>长按去控制准备位</span><i></i></button>
+          <button class="button hold-arm" id="collect-arm-hold" disabled><span>长按进入实机控制</span><i></i></button>
+          <button class="button danger" id="collect-arm-disarm" disabled>退出并失能</button>
+        </div>
+        <div class="joint-section"><span>当前关节角</span><div class="joint-readout" id="collect-joints" aria-label="当前六轴关节角"></div></div>
+        <div class="gripper-actions">
+          <button class="button" id="collect-gripper-enable">使能夹爪</button>
+          <button class="button" id="collect-gripper-stop">停止运动</button>
+          <span id="gripper-key-state">0 闭合 · . 张开</span>
+        </div>
+        <div class="keyboard-controls" id="control-keyboard" tabindex="0" aria-label="键盘控制：WASD 平移，方向键升降，数字键转向和开合">
+        <div class="keyboard-label">沿末端方向移动</div>
+        <div class="key-row" aria-label="移动按键状态">
+          <span class="key-state" data-key="w" title="沿夹爪朝向前进">W</span>
+          <span class="key-state" data-key="a" title="沿夹爪自身左侧移动">A</span>
+          <span class="key-state" data-key="s" title="沿夹爪朝向后退">S</span>
+          <span class="key-state" data-key="d" title="沿夹爪自身右侧移动">D</span>
+          <span class="key-state" data-key="arrowup" title="沿夹爪自身上方移动">↑</span>
+          <span class="key-state" data-key="arrowdown" title="沿夹爪自身下方移动">↓</span>
+        </div>
+        <div class="keyboard-label">末端自身转向 · 按住转动，松开停止输入</div>
+        <div class="turn-keypad" aria-label="转向按键状态">
+          <span class="key-state" data-key="8">8<small>上</small></span>
+          <span class="key-state" data-key="4">4<small>左</small></span>
+          <span class="key-state" data-key="2">2<small>下</small></span>
+          <span class="key-state" data-key="6">6<small>右</small></span>
+        </div>
+        <div class="key-row gripper-key-row" aria-label="夹爪按键状态">
+          <span class="key-state" data-key="0">0<small>闭合</small></span>
+          <span class="key-state" data-key=".">.<small>张开</small></span>
+        </div>
+        </div>
+        <p class="collect-note" id="control-diagnostics" aria-live="polite"></p>
+        <p class="collect-note" id="collect-camera-warning"></p>
+        <details class="collect-note"><summary>操作说明</summary><p>所有方向跟随末端：W/S 沿夹爪朝向前进、后退，A/D 沿夹爪自身左右移动，↑/↓ 沿夹爪自身上下移动。8/2 向末端自身上方、下方转，4/6 向自身左侧、右侧转，转向保持抓取点补偿。0 闭合夹爪，. 张开，均为按住操作、松开停止输入。支持小键盘和主键盘数字；小键盘不受 Num Lock 影响。Esc 停止全部输入，离开窗口也会停止；退出实机控制时六轴与夹爪一起失能。</p></details>
+        <p class="inline-status" id="collect-message" aria-live="polite"></p>
+      </section>
+    </div>
+  </main>
+  <script src="/static/collect.js?v=0.8.16"></script>
+</body>
+</html>

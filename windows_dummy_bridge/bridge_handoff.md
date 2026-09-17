@@ -170,3 +170,26 @@ ros_rad = hardware_deg * [1,1,1,1,-1,-1] * pi/180 - [0,0,pi/2,0,0,0]
 - 当前 Dummy USB 未枚举，本轮反馈 unavailable。未发送运动、START、CMDMODE、STOP，未做 V4 真机写入、断线、吞吐测试或新增 mock 测试。
 - 原 V3 会话/限位测试与现场工具已归档，verify_remote.py 已改为 V4 只读检查；旧记录不作为 V4 测试结果。
 - Fibre 未接入，不宣称支持所有 USB/Fibre 方法。
+
+## 摄像头模块（Windows）
+
+camera_backend.py 在独立进程中读取 OpenCV UVC 设备 index 0；V4 网页显示画面并可修改配置，接口为 GET /camera/status、GET /camera/frame、GET /camera/stream、GET /camera/config 和 POST /camera/config。/camera/stream 是最高 30 FPS 的 multipart MJPEG 长连接，/camera/frame 保留给控制节点按需取单帧。采集进程与 USB 串口进程隔离，摄像头错误或重配置不会影响 Dummy。依赖 opencv-python-headless==4.10.0.84（含 numpy）。2026-09-14 已确认正常图像，未发送 Dummy 控制命令。
+
+配置请求示例：
+
+```json
+{"width":1280,"height":720,"fps":30,"jpeg_quality":85}
+```
+
+允许分辨率为 1280×720、1920×1080，FPS 为 30、60、120，JPEG 质量为 40–95 整数。字段可部分提交；成功后仅重启摄像头子进程并原子写入 camera_config.json。HTTP 422 表示未知字段、不支持的分辨率/FPS或质量越界；HTTP 503 表示摄像头未能采用配置，旧配置仍保留。
+
+
+摄像头修复记录（2026-09-14）：
+- status/frame 曾同时读取同一 multiprocessing Pipe 导致 AssertionError；现在同一摄像头进程的请求及关闭使用独立 RLock 串行化，不占用 Dummy USB 锁。
+- 已完成常用模式矩阵测试。该驱动要求依次设置 width、height、fps，最后设置 MJPG；若在 MJPG 后再设置尺寸或帧率，会切回 YUY2 并产生全黑帧。桥接固定请求 1280×720 @ 30 FPS，正式采集进程稳定实测约 30 FPS。
+- GET /camera/status 返回 requested_mode、driver_mode、actual_mode、property_order、dimensions、frame_id、captured_at_ms 和 frame_age_ms；actual_mode.measured_fps 是约 4 秒滑动窗口实测值，驱动报告的 FPS 不等于真实帧率。
+- GET /camera/frame 返回 image/jpeg，附 X-Frame-Id、X-Captured-At-Ms。无有效帧返回 HTTP 503 JSON；读失败清除旧图，超过 2 秒的缓存图不作为有效帧返回。
+- 并发执行 status/frame/health 的 8 个只读请求全部成功，4 张 JPEG 均解码为 1280×720、非黑图；网页截图已确认真实画面。网页预览约 1 次/秒，与相机实际采集频率不同。
+- 与桥接相同的 JPEG 编码负载下，1280×720 请求 15/30/60/120 时约为 30/30/60/87 FPS；1920×1080 时约为 30/30/39/37 FPS。请求 15 FPS 会被设备实际按约 30 FPS 输出；高帧率模式曝光更短、画面明显更暗。640×360 和 640×480 请求会被驱动改成 1280×720，需由消费端缩放。吞吐原始记录见 runtime/camera_throughput_1789395542734/report.json，属性顺序记录见 runtime/camera_order_1789394956420/report.json。
+- 网页与 API 已实测切换到 1920×1080 后获得非黑帧，再恢复 1280×720；完整桥接重启后成功加载保存配置。非法 640×480 请求返回 HTTP 422，未覆盖原配置。
+- 桥接及 SSH 隧道已重启加载修复。本轮没有向 Dummy 发送 START、运动或 STOP。

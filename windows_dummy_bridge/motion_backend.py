@@ -1,10 +1,14 @@
 """V4 serial transactions; only the supplied payload is ever written."""
 import time
+from motion_protocol import motion_acknowledged, joint_reply_complete
 
 MAX_RESPONSE_BYTES = 65536
+READ_POLL_SECONDS = .001
+SERIAL_READ_STRATEGY = 'nonblocking_poll_v1'
 
 
 def exchange(reader, payload, read_timeout_ms):
+    started = time.monotonic()
     result = dict(sent=False, bytes_written=0, write_status='not_attempted',
                   raw_response='', raw_response_hex='', pending_response='',
                   pending_response_hex='', read_timed_out=False)
@@ -41,9 +45,26 @@ def exchange(reader, payload, read_timeout_ms):
             if not remaining:
                 result['response_limit_reached'] = True
                 break
-            s.timeout = min(.05, max(0, deadline - time.monotonic()))
-            data = s.read(min(max(s.in_waiting, 1), remaining))
+            # Never change serial properties here: pySerial reconfigures the
+            # Windows driver on every assignment, even if the value is equal.
+            available = s.in_waiting
+            data = s.read(min(available, remaining)) if available else b''
+            if not data:
+                pause = min(READ_POLL_SECONDS, max(0, deadline - time.monotonic()))
+                if pause:
+                    time.sleep(pause)
+                continue
             received.extend(data)
+            # Finish a structured motion transaction on a complete, validated
+            # acknowledgement, not an unconditional half-second delay.
+            if (payload.startswith(b'>') and received.endswith(b'\n')
+                    and motion_acknowledged({'sent':result['sent'],
+                                             'raw_response':received.decode('latin-1')})):
+                result['read_ended_on_ack'] = True
+                break
+            if payload.strip() == b'#GETJPOS' and joint_reply_complete(received):
+                result['read_ended_on_joint_reply'] = True
+                break
         result['read_timed_out'] = bool(read_timeout_ms and not received)
         result['read_wait_skipped'] = read_timeout_ms == 0
         result['reply_correlation'] = 'unavailable_in_ascii_protocol'
@@ -52,6 +73,7 @@ def exchange(reader, payload, read_timeout_ms):
         reader.close()
     finally:
         result.update(raw_response=received.decode('latin-1'), raw_response_hex=received.hex(),
+                      serial_elapsed_ms=round((time.monotonic() - started) * 1000, 3),
                       received_at_ms=time.time_ns() // 1_000_000)
     return result
 

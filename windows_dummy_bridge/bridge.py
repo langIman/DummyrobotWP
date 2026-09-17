@@ -12,9 +12,16 @@ from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 from device import worker
+from gripper_feedback import GripperFeedback
+from camera_backend import serve as camera_worker
+from motion_protocol import format_motion, motion_acknowledged
 
 ROOT = Path(__file__).parent
 JOINTS = [f'J{i}' for i in range(1, 7)]
+CAMERA_CONFIG_PATH = ROOT / 'camera_config.json'
+DEFAULT_CAMERA_CONFIG = dict(width=1280, height=720, fps=30, jpeg_quality=85)
+SUPPORTED_CAMERA_RESOLUTIONS = [(1280, 720), (1920, 1080)]
+SUPPORTED_CAMERA_FPS = [30, 60, 120]
 
 
 def now_ms():
@@ -37,20 +44,15 @@ class USBWorker:
                 ctx = mp.get_context('spawn')
                 self.pipe, child = ctx.Pipe()
                 self.proc = ctx.Process(target=worker, args=(child,), daemon=True)
-                self.proc.start()
-                child.close()
-            self.pipe.send(dict(payload=payload, read_timeout_ms=read_timeout_ms))
-            sent_to_worker = True
-            if not self.pipe.poll(3.2):
-                raise TimeoutError('local_worker_deadline')
+                self.proc.start(); child.close()
+            self.pipe.send(dict(payload=payload, read_timeout_ms=read_timeout_ms)); sent_to_worker = True
+            if not self.pipe.poll(3.2): raise TimeoutError('local_worker_deadline')
             return self.pipe.recv()
         except (OSError, EOFError, TimeoutError) as exc:
             self.close()
             return dict(sent=None if sent_to_worker else False, bytes_written=None if sent_to_worker else 0,
-                        write_status='unknown' if sent_to_worker else 'not_attempted',
-                        raw_response='', raw_response_hex='', read_timed_out=True,
-                        error=dict(code='worker_unavailable', message=str(exc)),
-                        response_capture_complete=False)
+                        write_status='unknown' if sent_to_worker else 'not_attempted', raw_response='', raw_response_hex='',
+                        read_timed_out=True, error=dict(code='worker_unavailable', message=str(exc)), response_capture_complete=False)
 
     def close(self):
         if self.proc:
@@ -58,19 +60,85 @@ class USBWorker:
                 try: self.pipe.send('close')
                 except (OSError, EOFError): pass
                 self.proc.join(.3)
-            if self.proc.is_alive():
-                self.proc.terminate()
-                self.proc.join(.5)
-            if self.proc.is_alive():
-                self.proc.kill()
-                self.proc.join(.5)
+            if self.proc.is_alive(): self.proc.terminate(); self.proc.join(.5)
+            if self.proc.is_alive(): self.proc.kill(); self.proc.join(.5)
         if self.pipe: self.pipe.close()
         self.proc = self.pipe = None
 
 
+class CameraWorker:
+    """OpenCV runs separately so camera stalls cannot block serial requests."""
+    def __init__(self, config):
+        self.proc = self.pipe = None
+        self.lock = threading.RLock()
+        self.config = dict(config)
+
+    def _request(self, message, timeout):
+        try:
+            if self.proc is None:
+                ctx = mp.get_context('spawn')
+                self.pipe, child = ctx.Pipe()
+                self.proc = ctx.Process(
+                    target=camera_worker, args=(child, dict(self.config)), daemon=True
+                )
+                self.proc.start()
+                child.close()
+            self.pipe.send(message)
+            if not self.pipe.poll(timeout):
+                raise TimeoutError('camera_worker_deadline')
+            return self.pipe.recv()
+        except (OSError, EOFError, TimeoutError, AssertionError) as exc:
+            self._close()
+            return dict(camera_status='unavailable', reason=str(exc), jpeg=None)
+
+    def request(self, message, timeout=8):
+        with self.lock:
+            return self._request(message, timeout)
+
+    def configure(self, config):
+        with self.lock:
+            previous = self.config
+            self.config = dict(config)
+            self._close()
+            result = self._request('status', 10)
+            driver = result.get('driver_mode') or {}
+            applied = (
+                driver.get('width') == config['width']
+                and driver.get('height') == config['height']
+                and driver.get('fourcc') == 'MJPG'
+            )
+            result['configuration_applied'] = applied
+            if applied:
+                result['configuration'] = dict(config)
+                return result
+            self.config = previous
+            self._close()
+            result['error'] = dict(code='camera_configuration_failed')
+            return result
+
+    def get_config(self):
+        with self.lock:
+            return dict(self.config)
+
+    def close(self):
+        with self.lock:
+            self._close()
+
+    def _close(self):
+        if self.proc:
+            if self.proc.is_alive() and self.pipe:
+                try: self.pipe.send('close')
+                except (OSError,EOFError): pass
+                self.proc.join(.3)
+            if self.proc.is_alive(): self.proc.terminate(); self.proc.join(.5)
+        if self.pipe: self.pipe.close()
+        self.proc=self.pipe=None
+
 class Bridge:
     def __init__(self):
         self.usb = USBWorker()
+        self.gripper_feedback = GripperFeedback()
+        self.camera = CameraWorker(self.load_camera_config())
         self.instance_id = str(uuid.uuid4())
         self.gate = threading.Lock()
         self.waiter = threading.BoundedSemaphore(1)
@@ -89,24 +157,35 @@ class Bridge:
         self.logger.addHandler(self.log_handler)
 
     def health(self):
+        from motion_backend import SERIAL_READ_STRATEGY
         return dict(status='alive', protocol_version=4, mode='transport',
+                    serial_read_strategy=SERIAL_READ_STRATEGY,
                     instance_id=self.instance_id, bridge_time_ms=now_ms(), device_enabled=None)
 
     def capabilities(self):
         return dict(protocol_version=4, transport='usb_cdc_ascii',
-                    endpoints=['GET /health','GET /capabilities','GET /state','POST /command',
-                               'POST /motion','POST /stop','GET /monitor','GET /'],
+                    endpoints=['GET /health','GET /capabilities','GET /state','GET /gripper/state','POST /command',
+                               'POST /motion','POST /stop','GET /camera/status','GET /camera/frame','GET /camera/stream',
+                               'GET /camera/config','POST /camera/config','GET /monitor','GET /'],
                     raw_ascii=True, multiline=True, fibre_supported=False,
                     joints=JOINTS, unit='degree', coordinate_space='hardware_joint',
                     default_speed=100, bridge_range_enforcement=False,
                     limits_informational=[[-170,170],[-75,90],[35,180],[-180,180],[-120,120],[-720,720]],
                     limits_source='repository_with_operator_j2_correction; installed firmware owns enforcement',
-                    serial=dict(baudrate=115200, format='8N1', write_timeout_ms=250),
+                    serial=dict(baudrate=115200, format='8N1', write_timeout_ms=250,
+                                read_mode='nonblocking', read_poll_interval_ms=1),
                     io=dict(default_read_timeout_ms=500,max_read_timeout_ms=2000,max_command_bytes=16384,
                             max_response_bytes=65536,worker_deadline_ms=3200,max_waiting_requests=1),
                     confirmation='ASCII parsing acknowledgment only; not physical completion',
                     stop=dict(command='!STOP', automatic=False, disconnect_stops_motion=False),
                     feedback=dict(command='#GETJPOS',source='device_reported',device_timestamp=False),
+                    gripper_feedback=dict(endpoint='/gripper/state',source='stlink_mainboard_cache',
+                                          requires_stlink=True,read_only=True,device_timestamp=False),
+                    camera=dict(transport='local_windows_uvc',index=0,endpoint='/camera/frame',
+                                stream_endpoint='/camera/stream',stream_max_fps=30,
+                                status_endpoint='/camera/status',config_endpoint='/camera/config',
+                                supported_resolutions=[list(value) for value in SUPPORTED_CAMERA_RESOLUTIONS],
+                                supported_fps=SUPPORTED_CAMERA_FPS,jpeg_quality_range=[40,95],independent_process=True),
                     deprecated=['/session','/unlock','/heartbeat','/lock','/validate-motion'])
 
     def log(self, kind, **data):
@@ -119,7 +198,60 @@ class Bridge:
     def monitor(self):
         with self.monitor_gate:
             return dict(health=self.health(), state=self.last_state, events=list(self.events),
-                        serial_busy=self.gate.locked(), passive=True)
+                        serial_busy=self.gate.locked(), camera_busy=False, passive=True)
+
+    def camera_status(self):
+        return self.camera.request('status')
+
+    def camera_frame(self):
+        result=self.camera.request('frame')
+        jpeg=result.pop('jpeg',None)
+        return result,jpeg
+
+    @staticmethod
+    def validate_camera_config(value, current=None):
+        if not isinstance(value, dict):
+            raise BridgeError(400, 'json_object_required')
+        if set(value) - {'width', 'height', 'fps', 'jpeg_quality'}:
+            raise BridgeError(422, 'unknown_fields')
+        merged = dict(current or DEFAULT_CAMERA_CONFIG)
+        merged.update(value)
+        if any(type(merged.get(name)) is not int for name in ('width', 'height', 'fps', 'jpeg_quality')):
+            raise BridgeError(422, 'camera_config_integers_required')
+        if (merged['width'], merged['height']) not in SUPPORTED_CAMERA_RESOLUTIONS:
+            raise BridgeError(422, 'unsupported_camera_resolution')
+        if merged['fps'] not in SUPPORTED_CAMERA_FPS:
+            raise BridgeError(422, 'unsupported_camera_fps')
+        if not 40 <= merged['jpeg_quality'] <= 95:
+            raise BridgeError(422, 'jpeg_quality_out_of_range')
+        return merged
+
+    @classmethod
+    def load_camera_config(cls):
+        try:
+            value = json.loads(CAMERA_CONFIG_PATH.read_text(encoding='utf-8'))
+            return cls.validate_camera_config(value)
+        except (OSError, ValueError, BridgeError):
+            return dict(DEFAULT_CAMERA_CONFIG)
+
+    def camera_config(self):
+        return dict(
+            configuration=self.camera.get_config(),
+            supported_resolutions=[list(value) for value in SUPPORTED_CAMERA_RESOLUTIONS],
+            supported_fps=SUPPORTED_CAMERA_FPS,
+            jpeg_quality=dict(min=40, max=95),
+            persisted=CAMERA_CONFIG_PATH.exists(),
+        )
+
+    def set_camera_config(self, body):
+        config = self.validate_camera_config(body, self.camera.get_config())
+        result = self.camera.configure(config)
+        if result.get('configuration_applied'):
+            temporary = CAMERA_CONFIG_PATH.with_suffix('.json.tmp')
+            temporary.write_text(json.dumps(config, indent=2) + '\n', encoding='utf-8')
+            temporary.replace(CAMERA_CONFIG_PATH)
+            result['persisted'] = True
+        return result
 
     def transact(self, command, timeout, path):
         payload = command.encode('ascii')
@@ -165,6 +297,16 @@ class Bridge:
             if path=='/health': return self.health()
             if path=='/capabilities': return self.capabilities()
             if path=='/monitor': return self.monitor()
+            if path=='/gripper/state': return self.gripper_feedback.read()
+            if path=='/camera/status': return self.camera_status()
+            if path=='/camera/config': return self.camera_config()
+            if path=='/camera/frame':
+                result,jpeg=self.camera_frame()
+                result['jpeg_bytes']=len(jpeg) if jpeg else 0
+                result['_jpeg']=jpeg
+                return result
+        if method=='POST' and path=='/camera/config':
+            return self.set_camera_config(body)
         if path in ('/session','/unlock','/heartbeat','/lock','/validate-motion'):
             raise BridgeError(410,'endpoint_removed_in_v4')
         if not (method=='GET' and path=='/state') and not (method=='POST' and path in ('/command','/motion','/stop')):
@@ -193,9 +335,12 @@ class Bridge:
                     raise BridgeError(422,'six_finite_axes_required')
                 speed=body.get('speed',100)
                 if not self.finite(speed): raise BridgeError(422,'finite_speed_required')
-                result=self.transact('>'+','.join(format(v,'.15g') for v in [*q,speed]),500,path)
-                result.update(accepted=result.get('sent') is True and not result.get('error') and
-                              'ok' in result['raw_response'].splitlines(),execution_complete=False)
+                try:
+                    command = format_motion(q, speed)
+                except ValueError:
+                    raise BridgeError(422, 'motion_command_exceeds_firmware_buffer')
+                result=self.transact(command,500,path)
+                result.update(accepted=motion_acknowledged(result),execution_complete=False)
                 return result
             if body: raise BridgeError(422,'empty_object_required')
             result=self.transact('!STOP',500,path)
@@ -207,6 +352,7 @@ class Bridge:
 
     def close(self):
         with self.gate: self.usb.close()
+        self.camera.close()
         self.log_handler.close()
         self.logger.removeHandler(self.log_handler)
 
@@ -229,6 +375,42 @@ def handler_for(bridge):
             self.end_headers()
             self.wfile.write(raw)
 
+        def stream_camera(self):
+            boundary = b'frame'
+            self.send_response(200)
+            self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=frame')
+            self.send_header('Cache-Control', 'no-store')
+            self.send_header('Connection', 'close')
+            self.send_header('X-Content-Type-Options', 'nosniff')
+            self.end_headers()
+            last_frame_id = None
+            try:
+                while True:
+                    cycle_started = time.monotonic()
+                    result, jpeg = bridge.camera_frame()
+                    frame_id = result.get('frame_id')
+                    if jpeg and frame_id != last_frame_id:
+                        headers = (
+                            b'--' + boundary + b'\r\n'
+                            b'Content-Type: image/jpeg\r\n'
+                            + f'Content-Length: {len(jpeg)}\r\n'.encode('ascii')
+                            + f'X-Frame-Id: {frame_id}\r\n'.encode('ascii')
+                            + f"X-Captured-At-Ms: {result.get('captured_at_ms', '')}\r\n\r\n".encode('ascii')
+                        )
+                        self.wfile.write(headers)
+                        self.wfile.write(jpeg)
+                        self.wfile.write(b'\r\n')
+                        self.wfile.flush()
+                        last_frame_id = frame_id
+                    elapsed = time.monotonic() - cycle_started
+                    time.sleep(max(.002, (1 / 30) - elapsed))
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, TimeoutError, OSError):
+                self.close_connection = True
+
+        def log_message(self, format, *args):
+            if urlsplit(self.path).path not in ('/camera/frame', '/camera/stream'):
+                super().log_message(format, *args)
+
         def run_request(self):
             try:
                 if self.headers.get('Host','') not in ('127.0.0.1:8765','localhost:8765','127.0.0.1:18765','localhost:18765'):
@@ -239,6 +421,8 @@ def handler_for(bridge):
                 path=urlsplit(self.path).path
                 if self.command=='GET' and path=='/':
                     return self.reply(200,(ROOT/'dashboard.html').read_bytes(),html=True)
+                if self.command=='GET' and path=='/camera/stream':
+                    return self.stream_camera()
                 body=None
                 if self.command=='POST':
                     if self.headers.get('Content-Type','').split(';')[0]!='application/json': raise BridgeError(415,'json_required')
@@ -251,6 +435,19 @@ def handler_for(bridge):
                         body=json.loads(self.rfile.read(length).decode('utf-8'),parse_constant=invalid_constant)
                     except (ValueError,UnicodeError): raise BridgeError(400,'invalid_json')
                 result=bridge.dispatch(self.command,path,body)
+                if path=='/camera/frame' and result.get('_jpeg'):
+                    jpeg=result.pop('_jpeg')
+                    self.send_response(200)
+                    self.send_header('Content-Type','image/jpeg')
+                    self.send_header('Content-Length',str(len(jpeg)))
+                    self.send_header('Cache-Control','no-store')
+                    self.send_header('X-Frame-Id',str(result.get('frame_id','')))
+                    self.send_header('X-Captured-At-Ms',str(result.get('captured_at_ms','')))
+                    self.send_header('Connection','close')
+                    self.end_headers(); self.wfile.write(jpeg); return
+                if path=='/camera/frame':
+                    result.pop('_jpeg',None)
+                    return self.reply(503,result)
                 self.reply(503 if result.get('error') else 200,result)
             except BridgeError as exc:
                 self.reply(exc.status,dict(error=dict(code=exc.code),sent=False,bytes_written=0))

@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DummyV2 感知控制台</title>
+  <link rel="stylesheet" href="/static/app.css?v=0.5.3">
+  <link rel="stylesheet" href="/static/gripper.css?v=0.5.3">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div><strong>DummyV2</strong><span>感知控制台</span></div>
+    </div>
+    <div class="header-actions">
+      <a class="button subtle collect-link" href="/collect">数据采集模式</a>
+      <span class="service-state" id="service-state"><i></i>连接中</span>
+      <button class="button danger emergency" id="emergency">急停</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="status-strip" aria-label="系统状态">
+      <div><span>腕部</span><strong id="wrist-summary">连接中</strong></div>
+      <div><span>OAK-D</span><strong id="oak-summary">连接中</strong></div>
+      <div><span>Dummy</span><strong id="robot-summary">检查中</strong></div>
+      <div><span>磁盘</span><strong id="disk-summary">-- GB</strong></div>
+      <div><span>录制</span><strong id="record-summary">空闲</strong></div>
+    </section>
+
+    <section class="camera-band" aria-labelledby="camera-heading">
+      <div class="section-heading">
+        <div><p class="section-kicker">LIVE PERCEPTION</p><h1 id="camera-heading">实时感知</h1></div>
+        <span id="capture-clock">--:--:--</span>
+      </div>
+      <div class="camera-grid">
+        <figure class="camera-view" id="view-wrist" data-state="connecting">
+          <figcaption><strong>腕部 RGB</strong><span id="wrist-meta">等待图像</span></figcaption>
+          <div class="camera-screen"><img id="stream-wrist" src="/api/streams/wrist.mjpeg" alt="腕部相机实时画面"></div>
+        </figure>
+        <figure class="camera-view" id="view-oak-rgb" data-state="connecting">
+          <figcaption><strong>上方 RGB</strong><span id="oak-rgb-meta">等待图像</span></figcaption>
+          <div class="camera-screen"><img id="stream-oak-rgb" src="/api/streams/oak-rgb.mjpeg" alt="OAK-D 上方彩色画面"></div>
+        </figure>
+        <figure class="camera-view" id="view-oak-depth" data-state="connecting">
+          <figcaption><strong>上方深度</strong><span id="oak-depth-meta">200–3000 mm</span></figcaption>
+          <div class="camera-screen"><img id="stream-oak-depth" src="/api/streams/oak-depth.mjpeg" alt="OAK-D 深度伪彩画面"></div>
+        </figure>
+      </div>
+    </section>
+
+    <section class="workspace-band" aria-labelledby="recording-heading">
+      <div class="section-heading compact">
+        <div><p class="section-kicker">CAPTURE SESSION</p><h2 id="recording-heading">片段录制</h2></div>
+        <span class="record-indicator" id="record-indicator"><i></i><span>空闲</span></span>
+      </div>
+      <div class="record-toolbar">
+        <label class="field grow"><span>片段标签</span><input id="record-label" maxlength="80" placeholder="例如：抓取测试 01"></label>
+        <div class="record-metrics">
+          <div><span>时长</span><strong id="record-duration">00:00</strong></div>
+          <div><span>腕部帧</span><strong id="record-wrist-count">0</strong></div>
+          <div><span>OAK 帧</span><strong id="record-oak-count">0</strong></div>
+          <div><span>关节样本</span><strong id="record-robot-count">0</strong></div>
+        </div>
+        <button class="button primary record-button" id="record-toggle"><span class="record-dot"></span>开始录制</button>
+      </div>
+      <p class="inline-status" id="record-message" aria-live="polite"></p>
+    </section>
+
+    <section class="workspace-band" aria-labelledby="camera-config-heading">
+      <div class="section-heading compact">
+        <div><p class="section-kicker">CAMERA SETUP</p><h2 id="camera-config-heading">相机配置</h2></div>
+        <button class="button subtle" id="discover">刷新设备</button>
+      </div>
+      <div class="config-grid">
+        <div class="config-group">
+          <div class="config-title"><strong>腕部 AR0234</strong><span id="wrist-config-state">--</span></div>
+          <div class="fields">
+            <label class="field wide"><span>设备</span><select id="wrist-device"><option value="">自动识别</option></select></label>
+            <label class="field"><span>分辨率</span><select id="wrist-resolution"><option value="1280x720">1280 × 720</option><option value="1920x1080">1920 × 1080</option></select></label>
+            <label class="field"><span>帧率</span><select id="wrist-fps"><option>30</option><option>60</option><option>120</option></select></label>
+            <label class="field quality"><span>JPEG</span><input id="wrist-quality" type="number" min="40" max="95" value="85"></label>
+          </div>
+          <div class="button-row"><button class="button subtle camera-toggle" data-camera="wrist">停止</button><button class="button primary" id="apply-wrist">应用腕部配置</button></div>
+        </div>
+        <div class="config-group">
+          <div class="config-title"><strong>OAK-D Pro RGB-D</strong><span id="oak-config-state">--</span></div>
+          <div class="fields">
+            <label class="field wide"><span>设备</span><select id="oak-device"><option value="">自动识别</option></select></label>
+            <label class="field"><span>RGB 分辨率</span><select id="oak-resolution"><option value="640x360">640 × 360</option><option value="1280x720">1280 × 720</option><option value="1920x1080">1920 × 1080</option></select></label>
+            <label class="field"><span>RGB-D 帧率</span><select id="oak-fps"><option>15</option><option>30</option></select></label>
+            <label class="field quality"><span>JPEG</span><input id="oak-quality" type="number" min="40" max="95" value="85"></label>
+            <label class="field"><span>近端 mm</span><input id="depth-min" type="number" min="0" max="65534" value="200"></label>
+            <label class="field"><span>远端 mm</span><input id="depth-max" type="number" min="1" max="65535" value="3000"></label>
+          </div>
+          <div class="button-row"><button class="button subtle camera-toggle" data-camera="oak">停止</button><button class="button primary" id="apply-oak">应用 OAK 配置</button></div>
+        </div>
+      </div>
+      <p class="inline-status" id="config-message" aria-live="polite"></p>
+    </section>
+
+    <section class="workspace-band robot-band" aria-labelledby="robot-heading">
+      <div class="section-heading compact">
+        <div><p class="section-kicker">ROBOT STATE</p><h2 id="robot-heading">DummyV2</h2></div>
+        <div class="robot-actions">
+          <button class="button subtle" id="read-joints">读取角度</button>
+          <button class="button enable" id="enable">使能</button>
+          <button class="button subtle" id="disable">失能</button>
+        </div>
+      </div>
+      <div class="joint-grid" id="joints"></div>
+      <p class="gripper-note">夹爪显示软件逻辑角。“读取角度”会一起刷新六轴与夹爪。服务首次读到的角度会暂记为上电时的全闭参考 115°，不写入固件；原始电机角度仍会保留在状态中。</p>
+      <div class="motion-row">
+        <div class="motion-status"><span>动作状态</span><strong id="motion-state">无动作</strong><small id="robot-detail">桥接检查中</small></div>
+        <button class="button motion" data-preset="home">回零位</button>
+        <button class="button motion" data-preset="rest">回休止位</button>
+      </div>
+      <p class="inline-status" id="robot-message" aria-live="polite"></p>
+    </section>
+
+    <section class="workspace-band gripper-band" aria-labelledby="gripper-heading">
+      <div class="section-heading compact">
+        <div><p class="section-kicker">GRIPPER</p><h2 id="gripper-heading">夹爪调试</h2></div>
+        <button class="button danger" id="gripper-disable">夹爪失能</button>
+      </div>
+      <div class="gripper-status" aria-live="polite">
+        <strong id="gripper-state">状态未知</strong><span id="gripper-countdown"></span>
+        <span id="gripper-angle">电机角反馈：尚无</span><span id="gripper-reference-state">尚未建立软件参考</span>
+      </div>
+      <div class="gripper-controls">
+        <label class="field"><span>开合电流设定（A）</span><input id="gripper-current" type="number" min="0.05" max="1.00" step="0.01" value="0.60"></label>
+        <button class="button subtle" id="gripper-current-send">应用电流</button>
+        <label class="field"><span>开合通电时长</span><select id="gripper-duration"><option value="250">0.25 秒</option><option value="500" selected>0.5 秒</option><option value="1000">1 秒</option></select></label>
+        <button class="button enable" id="gripper-enable">夹爪使能</button>
+        <button class="button" id="gripper-open">短时打开</button>
+        <button class="button" id="gripper-close">短时闭合</button>
+        <button class="button subtle" id="gripper-reference">记录当前为闭合参考</button>
+      </div>
+      <div class="gripper-jog-controls" aria-label="夹爪点动控制">
+        <button class="button jog-close" id="gripper-jog-close">按住闭合</button>
+        <button class="button jog-open" id="gripper-jog-open">按住张开</button>
+      </div>
+      <p class="inline-status" id="gripper-message" aria-live="polite">先应用电流，再使能夹爪并选择开合。松键后保持控制就绪，下一次按住会自动恢复驱动使能。</p>
+      <p class="gripper-note">点动控制需要先使能一次夹爪。按住“闭合 / 张开”或键盘 ← / → 会持续运动；松开、网页失焦或 2 秒看门狗到期时，服务用驱动失能可靠停止输出，但保留网页控制就绪状态。再次按住会自动以 0.60 A 恢复使能并继续，无需手动点击使能。</p>
+      <p class="gripper-note">只控制夹爪，无需使能六轴。请在夹爪两指刚接触、且没有顶住物体时使用“记录当前为闭合参考”；该按钮只读角度，不会运动、使能或失能。</p>
+      <div class="gripper-unavailable"><button class="button subtle" disabled>位置控制 · 待验证</button><button class="button subtle" disabled>自动校准 · 待验证</button><span>行程映射和校准流程未验证，暂不发送这两类命令。</span></div>
+      <details class="gripper-replies" open><summary>最近命令与主控原始回复</summary><pre id="gripper-replies">暂无命令。本页启动不会使能夹爪。</pre></details>
+    </section>
+
+    <section class="workspace-band raw-band" id="ascii-console" aria-labelledby="raw-heading">
+      <div class="section-heading compact">
+        <div><p class="section-kicker">ASCII CONSOLE</p><h2 id="raw-heading">原始命令控制台</h2></div>
+        <span id="raw-mode">尚未发送</span>
+      </div>
+      <p class="gripper-note">原样发送任意单行 ASCII 命令，可能直接运动或修改参数。这里不限制关节目标、电流或速度，也不自动停止夹爪；需要停止时点击顶部红色“急停”。</p>
+      <div class="raw-controls">
+        <label class="field"><span>命令（最多 62 字节，不含换行）</span><input id="raw-command" placeholder="#GETJPOS" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <label class="field"><span>回复等待（ms）</span><input id="raw-timeout" type="number" min="0" max="2000" step="100" value="500"></label>
+        <button class="button primary" id="raw-send" disabled>发送命令</button>
+      </div>
+      <p class="inline-status" id="raw-message" aria-live="polite">输入后点击发送；回车不会发送，也不会自动重试。</p>
+      <p class="gripper-note">进入原始模式后暂停自动角度采样（录制中的关节数据会有间隔）；急停全部确认后恢复按钮控制。发送成功或收到 ok 均不代表动作完成，回复也可能延迟到下一次通信。</p>
+      <details class="gripper-replies" open><summary>最近 30 条命令 · 原始回复与桥接详情</summary><pre id="raw-replies">暂无命令。</pre></details>
+    </section>
+
+    <section class="workspace-band" aria-labelledby="history-heading">
+      <div class="section-heading compact"><div><p class="section-kicker">SESSIONS</p><h2 id="history-heading">最近片段</h2></div></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>片段</th><th>状态</th><th>时长</th><th>帧数</th><th>大小</th></tr></thead><tbody id="recordings"><tr><td colspan="5">暂无片段</td></tr></tbody></table>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="motion-dialog">
+    <form method="dialog">
+      <div class="dialog-head"><strong id="dialog-title">确认预设运动</strong><button value="cancel" aria-label="关闭">×</button></div>
+      <div class="target-joints" id="dialog-target"></div>
+      <p>机械臂将以速度 4 直达目标，该动作不包含路径避障。</p>
+      <button type="button" class="button primary hold-button" id="hold-confirm"><span></span><b>按住确认</b></button>
+    </form>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/static/app.js?v=0.5.6"></script>
+</body>
+</html>

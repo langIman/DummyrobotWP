@@ -13,6 +13,8 @@
 
 # 本地辅助工具
 
+0.[`Smolvla&dummyv2`](Smolvla%26dummyv2/README.md)：双相机感知、片段录制与键盘遥操作采集工作台，当前 v0.8.18 全部移动及转向跟随末端坐标。配套串口桥接位于 `windows_dummy_bridge`。 <br>
+
 1.`windows_dummy_bridge`：Windows USB 到 HTTP/SSH 的机械臂通信桥接，供远程控制端调用。 <br>
 2.`tools/wrist_camera`：DECXIN 腕部 UVC 摄像头预览与分辨率、帧率检查工具，默认端口 8766。 <br>
 3.`camera_mount`：安装在第六轴 20 x 20 mm 电机上的可打印摄像头支架，包含 STL、STEP、参数化源码和装配说明。 <br>

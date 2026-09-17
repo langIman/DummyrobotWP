@@ -1,0 +1,21 @@
+{
+  "wrist": {
+    "device_id": null,
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "jpeg_quality": 85
+  },
+  "oak": {
+    "mx_id": null,
+    "rgb_width": 1280,
+    "rgb_height": 720,
+    "fps": 30,
+    "jpeg_quality": 85,
+    "depth_width": 640,
+    "depth_height": 360,
+    "depth_min_mm": 200,
+    "depth_max_mm": 3000
+  }
+}
+
